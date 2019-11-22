@@ -1,0 +1,91 @@
+<html>
+  <!-- Simple version of https://github.com/HackerPoet/Chaos-Equations/blob/master/Main.cpp --> 
+    <head>
+        <title>Chaos</title>
+        <style type="text/css">
+            html, body {
+                margin: 0px;
+                width: 100%;
+                height: 100%;
+            }
+
+            #canvas {
+                background-color: black;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas  id="canvas"></canvas>
+
+        <script type="module">
+            'use strict';
+            
+            var canvas = document.getElementById("canvas");
+            var context = canvas.getContext("2d");
+  
+            var tick_start = -0.6;
+            var tick_end = 1;            
+            var t = tick_start;
+            var tick_increment = 0.00001;          
+
+            var scale = 1000;
+
+            var ray_count = 50;
+            var simulation_steps_per_frame = 100;
+            
+            function drawLoop(timestamp) {    
+                context.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                context.fillRect(0, 0, canvas.width, canvas.height);
+
+                var rawCanvas = context.getImageData(0, 0, canvas.width, canvas.height); 
+                var rawWidth = rawCanvas.width;
+
+                var window_x_half = rawCanvas.width / 2;
+                var window_y_half = rawCanvas.height / 2;
+
+                for(var s = 0; s < simulation_steps_per_frame; s++) {
+                    var x = t;
+                    var y = t;     
+
+                    for(var r = 0; r < ray_count; r++) {
+                        var next_x = x*x - x*t + y*t - x;
+                        var next_y = -(y*y) - t*t - x*y - x*t - y*t - y;
+
+                        x = next_x;
+                        y = next_y;
+
+                        var screen_x = Math.round(x * scale + window_x_half);
+                        var screen_y = Math.round(y * scale + window_y_half);
+
+                        var screen_index = screen_x + (screen_y * rawWidth);
+                        var index = screen_index * 4;
+
+                        rawCanvas.data[index + 0] = r * 11909 % 256;
+                        rawCanvas.data[index + 1] = r * 52973 % 256;
+                        rawCanvas.data[index + 2] = r * 44111 % 256;   
+                        rawCanvas.data[index + 3] = 255   
+                    }
+
+                    t = t + tick_increment;
+
+                    if(t > tick_end) {
+                        t = tick_start;
+                    }
+                }
+
+                context.putImageData(rawCanvas, 0, 0);
+                window.requestAnimationFrame(drawLoop);
+            }
+
+            function resize() {
+                canvas.width  = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+
+            window.addEventListener('resize', resize);
+
+            resize();
+            drawLoop();
+        </script>
+    </body>
+</html>
